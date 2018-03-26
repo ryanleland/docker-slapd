@@ -1,18 +1,19 @@
-#!/bin/sh
-
-set -eu
+#!/bin/bash
 
 status () {
   echo "---> ${@}" >&2
 }
 
-set -x
-: LDAP_ROOTPASS=${LDAP_ROOTPASS}
-: LDAP_DOMAIN=${LDAP_DOMAIN}
-: LDAP_ORGANISATION=${LDAP_ORGANISATION}
+DEFAULT_LDAP_ROOTPASS="toor"
+DEFAULT_LDAP_DOMAIN="example.com"
+DEFAULT_LDAP_ORGANISATION="Acme Widgets Inc."
 
-if [ ! -e /var/lib/ldap/docker_bootstrapped ]; then
-  status "configuring slapd for first run"
+LDAP_ROOTPASS=${LDAP_ROOTPASS:-$DEFAULT_LDAP_ROOTPASS}
+LDAP_DOMAIN=${LDAP_DOMAIN:-$DEFAULT_LDAP_DOMAIN}
+LDAP_ORGANISATION=${LDAP_ORGANISATION:-$DEFAULT_LDAP_ORGANISATION}
+
+if [[ ! -e /var/lib/ldap/docker_bootstrapped ]]; then
+  status "Configuring slapd for first run..."
 
   cat <<EOF | debconf-set-selections
 slapd slapd/internal/generated_adminpw password ${LDAP_ROOTPASS}
@@ -34,9 +35,9 @@ EOF
 
   touch /var/lib/ldap/docker_bootstrapped
 else
-  status "found already-configured slapd"
+  status "Found already-configured slapd..."
 fi
 
-status "starting slapd"
+status "Starting slapd..."
 set -x
-exec /usr/sbin/slapd -h "ldap:///" -u openldap -g openldap -d 0
+exec /usr/sbin/slapd -h "ldap:/// ldaps:///" -u openldap -g openldap -d 0
